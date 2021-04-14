@@ -12,7 +12,7 @@ class _matmul(node):
 
         self.inshapes = [(M, K), (K, N)]
         self.outshape = (M, N)
-        self.baseop = torch.matmul
+        self.ref = torch.matmul
 
         self.verbose = False
 

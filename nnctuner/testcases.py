@@ -15,6 +15,8 @@ import torch.nn
 from numpy import median
 
 from .operators.matmul import _matmul
+from .operators.convolution import _convolution
+
 import nnctuner.utils
 from .utils import kernel_arena_scope, Once
 
@@ -23,9 +25,12 @@ stats = Counter()
 results = []
 
 
-def measure_testcase(cfg, op, input_shape):
+def measure_testcase(cfg, op, init_args, input_shape):
     with kernel_arena_scope():
-        op = _matmul(*input_shape)
+        if op == "matmul":
+            op = _matmul(*input_shape)
+        if op == "conv2d":
+            op = _convolution(init_args, input_shape)
         op.verbose = args.verbose
         if cfg:
             op.apply_config(cfg)
@@ -38,26 +43,27 @@ def measure_testcase(cfg, op, input_shape):
        
         return gf / sec1, gf / sec2, sec1 / sec2
 
-def report_testcase(op, input_shape):
-    print(f"{op}/{input_shape}")
+def report_testcase(op, init_args, input_shape):
+    print(f"{op}/{init_args}/{input_shape}")
     if args.noconf:
         pytorch, autotuned, speedup = measure_testcase(
-            None, op, input_shape)
+            None, op, init_args, input_shape)
     else:
-        filename = f"./configs/{op},{repr(input_shape)}.json"
+        filename = f"./configs/{op}{repr(init_args)},{repr(input_shape)}.json"
         if args.autotune or not os.path.exists(filename):
             check_call([
                 sys.executable,
                 sys.argv[0],
                 "autotune",
                 "--op", repr(op),
+                "--init", repr(init_args),
                 "--input", repr(input_shape),
                 f"--test-limit={args.test_limit}",
                 f"--verbose={args.verbose}",
             ])
         cfg = json.load(open(filename))
         pytorch, autotuned, speedup = measure_testcase(
-            cfg, op, input_shape)
+            cfg, op, init_args, input_shape)
     print(f"{pytorch:.1f} gflops => {autotuned:.1f} gflops ({speedup:.2f}x)")
     results.append([repr(op), repr(input_shape),
                     f"{pytorch:.4f}", f"{autotuned:.4f}", f"{speedup:.4f}"])
@@ -89,10 +95,12 @@ def main(argv=None):
         testcases = pd.read_csv(args.testcases_filename)
         for _, row in testcases.iterrows():
             op = row["op"]
+            init = literal_eval(row["init_args"])
             input_shape = literal_eval(row["input"])
-            if first(op, input_shape) and (args.case is None or args.case == len(first)):
+            if first(op, init, input_shape) and (args.case is None or args.case == len(first)):
+            #if args.case is None:
                 sys.stdout.write(f"{len(first)}: ")
-                report_testcase(op, input_shape)
+                report_testcase(op, init, input_shape)
             if len(first) >= args.limit and args.case is None:
                 break
 

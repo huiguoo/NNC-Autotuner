@@ -22,6 +22,7 @@ from opentuner.search.manipulator import NumericParameter
 from opentuner.search.manipulator import PermutationParameter
 
 from .operators.matmul import _matmul
+from .operators.convolution import _convolution
 from .utils import kernel_arena_scope
 
 log = logging.getLogger(__name__)
@@ -29,16 +30,18 @@ REPEAT = 5
 
 parser = argparse.ArgumentParser(parents=opentuner.argparsers())
 parser.add_argument("--op")
+parser.add_argument("--init")
 parser.add_argument("--input")
 parser.add_argument("--verbose")
 parser.set_defaults(**vars(parser.parse_args([
     "--no-dups",
-    # "--stop-after=600",
+    #"--stop-after=600",
     "--test-limit=1000",
     #f"--parallelism={multiprocessing.cpu_count()}",
     #"--parallel-compile",
     "--technique=nnctuner",
     "--op", "matmul",
+    "--init", "",
     "--input", "(32, 32, 32)",
     "--verbose", False,
 ])))
@@ -63,9 +66,15 @@ opentuner.search.technique.register(AUCBanditMetaTechnique([
 class autoTuner(MeasurementInterface):
     def __init__(self, args=None):
         manipulator = ConfigurationManipulator()
+        op = ast.literal_eval(args.op)
+        init_args = ast.literal_eval(args.init)
         input_shape = ast.literal_eval(args.input)
-        self.op = _matmul(*input_shape)
-        self.base = self.op.baseop
+        if op == 'matmul':
+            self.op = _matmul(*input_shape)
+        if op == 'conv2d':
+            self.op = _convolution(init_args, input_shape)
+        assert(self.op)
+        self.base = self.op.ref
         self.inputs = self.op.gen_inputs()
         self.op.verbose = args.verbose
 
@@ -79,7 +88,7 @@ class autoTuner(MeasurementInterface):
         super(autoTuner, self).__init__(
             args=args,
             project_name="NNCAutoTuner",
-            program_name=repr(self.op),
+            program_name=repr(self.op)+repr(init_args),
             program_version=repr(input_shape),
             manipulator=manipulator,
         )

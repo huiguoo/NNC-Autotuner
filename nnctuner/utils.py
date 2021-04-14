@@ -6,6 +6,7 @@ import time
 from collections import Counter
 from functools import partial, reduce
 from operator import mul
+from math import sqrt
 
 log = logging.getLogger(__name__)
 
@@ -28,3 +29,13 @@ def timer(name):
     yield
     t1 = time.perf_counter()
     timers[name] += t1 - t0
+
+def divisors(n):
+    ret = []
+    for i in range(1, int(sqrt(n))+2):
+        if n % i == 0:
+            ret.append(i)
+            ret.append(n//i)
+            
+    return ret
+        
