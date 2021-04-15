@@ -1,5 +1,4 @@
 opentuner.*
-configs/*
 nnctuner/local
 nnctuner/__pycache__
 nnctuner/operators/__pycache__

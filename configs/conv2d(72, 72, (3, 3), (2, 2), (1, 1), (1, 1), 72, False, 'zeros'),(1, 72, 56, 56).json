@@ -1,0 +1,16 @@
+{
+  "reorder": [
+    "k",
+    "c",
+    "s",
+    "w",
+    "r",
+    "h",
+    "n",
+    "g"
+  ],
+  "tile_g": 1,
+  "tile_h": 3,
+  "tile_w": 3,
+  "unroll": 1
+}
