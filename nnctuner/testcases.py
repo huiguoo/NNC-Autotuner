@@ -34,13 +34,13 @@ def measure_testcase(cfg, op, init_args, input_shape):
         op.verbose = args.verbose
         if cfg:
             op.apply_config(cfg)
-        op.validation() 
+        op.validation()
 
         inputs = op.gen_inputs()
         sec1 = median(timeit.repeat(lambda: op.baseline(inputs), number=args.times, repeat=args.repeat))
         sec2 = median(timeit.repeat(lambda: op.run(inputs), number=args.times, repeat=args.repeat))
         gf = op.gflops() * args.times
-       
+
         return gf / sec1, gf / sec2, sec1 / sec2
 
 def report_testcase(op, init_args, input_shape):
@@ -65,7 +65,7 @@ def report_testcase(op, init_args, input_shape):
         pytorch, autotuned, speedup = measure_testcase(
             cfg, op, init_args, input_shape)
     print(f"{pytorch:.1f} gflops => {autotuned:.1f} gflops ({speedup:.2f}x)")
-    results.append([repr(op), repr(input_shape),
+    results.append([repr(op), repr(init_args), repr(input_shape),
                     f"{pytorch:.4f}", f"{autotuned:.4f}", f"{speedup:.4f}"])
     if speedup >= 1:
         stats["speedup_count"] += 1
@@ -108,7 +108,7 @@ def main(argv=None):
 
     with open("results.csv", "w") as fd:
         csv.writer(fd).writerows(
-            [["op", "input", "pytorch_gflops", "autotuner_gflops", "speedup"]] +
+            [["op", "init", "input", "pytorch_gflops", "autotuner_gflops", "speedup"]] +
             results)
 
     log.info("STATS %s", [f"{k}:{v}" for k, v in sorted(stats.items())])
