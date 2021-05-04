@@ -1,16 +1,18 @@
 {
   "reorder": [
-    "s",
-    "r",
     "w",
-    "n",
-    "h",
-    "g",
     "c",
-    "k"
+    "s",
+    "h",
+    "n",
+    "r",
+    "k",
+    "g"
   ],
-  "tile_g": 2,
-  "tile_h": 1,
-  "tile_w": 10,
-  "unroll": 0
+  "tile_g": 1,
+  "tile_h": 2,
+  "tile_r": 1,
+  "tile_s": 1,
+  "tile_w": 1,
+  "unroll": 1
 }
